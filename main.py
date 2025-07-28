@@ -2,10 +2,10 @@ import json
 from deep_translator import GoogleTranslator
 from tqdm import tqdm
 
-# ⚠️ Bu anahtarlar varsa çeviri yapılmaz
+# ⚠️ If these keywords are found in a key, the value will not be translated
 SKIP_KEYS = ['icon', 'image', 'logo', 'url', 'href', 'src', 'route', 'file', 'path', 'asset']
 
-# 🔍 JSON içindeki tüm çevirilecek metinleri (string) listelemek için
+# 🔍 Flatten the JSON and list all translatable strings with their paths
 def flatten_json(data, path=''):
     items = []
     if isinstance(data, dict):
@@ -20,11 +20,11 @@ def flatten_json(data, path=''):
         items.append((path, data))
     return items
 
-# Anahtar adı bir atlanacak listeye giriyorsa true döndür
+# Returns True if the key should be skipped (based on SKIP_KEYS)
 def is_skipped_key(key):
     return any(skip in key.lower() for skip in SKIP_KEYS)
 
-# 🌍 Çeviri işlemi (filtreli)
+# 🌍 Perform filtered translation of the JSON content
 def translate_json(data, translator, pbar, parent_key=''):
     if isinstance(data, dict):
         return {
@@ -41,28 +41,28 @@ def translate_json(data, translator, pbar, parent_key=''):
             pbar.update(1)
             return translated
         except Exception as e:
-            pbar.write(f"⚠️ Hata oluştu: {e} → {data[:30]}...")
+            pbar.write(f"⚠️ Error occurred: {e} → {data[:30]}...")
             return data
     else:
         return data
 
-# 📂 JSON dosyasını oku
+# 📂 Load the source JSON file (English)
 with open("en.json", "r", encoding="utf-8") as f:
     en_data = json.load(f)
 
-# 📊 Toplam çevrilecek metin sayısını göster
+# 📊 Show the total number of strings to be translated
 flat_items = flatten_json(en_data)
 total_texts = len(flat_items)
-print(f"Toplam çevrilecek metin sayısı: {total_texts}\n")
+print(f"Total number of strings to translate: {total_texts}\n")
 
-# 🌐 Çeviri başlatılıyor: İngilizce → İtalyanca
+# 🌐 Start translation: English → Italian
 translator = GoogleTranslator(source="en", target="it")
 
-with tqdm(total=total_texts, desc="İtalyanca çeviri") as pbar:
+with tqdm(total=total_texts, desc="Translating to Italian") as pbar:
     translated_data = translate_json(en_data, translator, pbar)
 
-# 💾 Çevrilen JSON'u kaydet
+# 💾 Save the translated JSON to file
 with open("it.json", "w", encoding="utf-8") as f:
     json.dump(translated_data, f, ensure_ascii=False, indent=2)
 
-print("\n✅ Çeviri tamamlandı: it.json dosyası oluşturuldu.")
+print("\n✅ Translation completed: 'it.json' file has been created.")
